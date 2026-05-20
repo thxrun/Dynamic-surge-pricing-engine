@@ -1,0 +1,29 @@
+# ============================================================
+# params.yaml — Dynamic Surge Pricing Engine
+# Single source of truth for all pipeline parameters.
+# DVC tracks this file so every experiment is reproducible.
+# ============================================================
+
+# ── Data generation ──────────────────────────────────────────
+data:
+  n_samples: 10000        # number of synthetic rows to generate
+  seed: 42                # global random seed
+
+# ── Preprocessing ────────────────────────────────────────────
+preprocess:
+  test_size: 0.20         # 80 / 20 train-test split
+  random_state: 42        # reproducible splits
+
+# ── Model (used in Phase 2) ──────────────────────────────────
+train:
+  model: xgboost          # options: xgboost | random_forest | linear
+  n_estimators: 200
+  max_depth: 6
+  learning_rate: 0.05
+  subsample: 0.8
+  random_state: 42
+
+# ── Evaluation thresholds (used in Phase 3 CI gates) ─────────
+evaluate:
+  min_r2: 0.80            # pipeline fails if R² drops below this
+  max_rmse: 0.25          # pipeline fails if RMSE exceeds this

@@ -1,0 +1,46 @@
+# ============================================================
+# dvc.yaml — DVC Pipeline Definition
+# Defines two stages for Phase 1:
+#   1. generate  → creates raw data
+#   2. preprocess → cleans, engineers features, splits data
+#
+# DVC tracks inputs (deps) and outputs (outs) of each stage.
+# If a dep changes, DVC knows exactly which stages to re-run.
+# ============================================================
+
+stages:
+
+  # ── Stage 1: Data Generation ──────────────────────────────
+  generate:
+    cmd: python generate_dataset.py
+    deps:
+      - generate_dataset.py     # re-run if the generator script changes
+    params:
+      - params.yaml:            # re-run if these params change
+          - data.n_samples
+          - data.seed
+    outs:
+      - data/raw/surge_pricing.csv:
+          desc: "Raw synthetic surge pricing dataset"
+          cache: true           # DVC caches this file in .dvc/cache
+
+  # ── Stage 2: Preprocessing ────────────────────────────────
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - src/preprocess.py
+      - data/raw/surge_pricing.csv   # output of stage 1 is input here
+    params:
+      - params.yaml:
+          - preprocess.test_size
+          - preprocess.random_state
+    outs:
+      - data/processed/train.csv:
+          desc: "Scaled training set with engineered features"
+          cache: true
+      - data/processed/test.csv:
+          desc: "Scaled test set with engineered features"
+          cache: true
+      - models/scaler.joblib:
+          desc: "Fitted StandardScaler for inference-time use"
+          cache: true

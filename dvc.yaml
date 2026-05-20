@@ -1,8 +1,10 @@
 # ============================================================
 # dvc.yaml — DVC Pipeline Definition
-# Defines two stages for Phase 1:
-#   1. generate  → creates raw data
-#   2. preprocess → cleans, engineers features, splits data
+# Full 4-stage pipeline:
+#   1. generate    → creates raw synthetic data
+#   2. preprocess  → feature engineering, train/test split, scaling
+#   3. train       → XGBoost model + MLflow logging
+#   4. evaluate    → metrics report + quality gate enforcement
 #
 # DVC tracks inputs (deps) and outputs (outs) of each stage.
 # If a dep changes, DVC knows exactly which stages to re-run.
@@ -14,22 +16,22 @@ stages:
   generate:
     cmd: python generate_dataset.py
     deps:
-      - generate_dataset.py     # re-run if the generator script changes
+      - generate_dataset.py
     params:
-      - params.yaml:            # re-run if these params change
+      - params.yaml:
           - data.n_samples
           - data.seed
     outs:
       - data/raw/surge_pricing.csv:
           desc: "Raw synthetic surge pricing dataset"
-          cache: true           # DVC caches this file in .dvc/cache
+          cache: true
 
   # ── Stage 2: Preprocessing ────────────────────────────────
   preprocess:
     cmd: python src/preprocess.py
     deps:
       - src/preprocess.py
-      - data/raw/surge_pricing.csv   # output of stage 1 is input here
+      - data/raw/surge_pricing.csv
     params:
       - params.yaml:
           - preprocess.test_size
@@ -44,3 +46,46 @@ stages:
       - models/scaler.joblib:
           desc: "Fitted StandardScaler for inference-time use"
           cache: true
+
+  # ── Stage 3: Model Training ───────────────────────────────
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/processed/train.csv
+      - data/processed/test.csv
+    params:
+      - params.yaml:
+          - train.model
+          - train.n_estimators
+          - train.max_depth
+          - train.learning_rate
+          - train.subsample
+          - train.random_state
+    outs:
+      - models/surge_model.joblib:
+          desc: "Trained XGBoost surge pricing model"
+          cache: true
+    metrics:
+      - reports/metrics.json:
+          cache: false
+    plots:
+      - reports/feature_importance.png:
+          cache: false
+      - reports/actual_vs_predicted.png:
+          cache: false
+
+  # ── Stage 4: Evaluation + Quality Gate ────────────────────
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - models/surge_model.joblib
+      - data/processed/test.csv
+    params:
+      - params.yaml:
+          - evaluate.min_r2
+          - evaluate.max_rmse
+    metrics:
+      - reports/metrics.json:
+          cache: false

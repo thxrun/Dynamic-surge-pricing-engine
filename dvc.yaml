@@ -75,17 +75,16 @@ stages:
       - reports/actual_vs_predicted.png:
           cache: false
 
-  # ── Stage 4: Evaluation + Quality Gate ────────────────────
+  
+ # ── Stage 4: Evaluation + Quality Gate ────────────────────
   evaluate:
     cmd: python src/evaluate.py
     deps:
       - src/evaluate.py
       - models/surge_model.joblib
       - data/processed/test.csv
+      - reports/metrics.json        # produced by train stage, read here
     params:
       - params.yaml:
           - evaluate.min_r2
           - evaluate.max_rmse
-    metrics:
-      - reports/metrics.json:
-          cache: false

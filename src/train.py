@@ -165,7 +165,7 @@ def train(params: dict) -> None:
 
     # ── 2. Configure MLflow ───────────────────────────────────────────────────
     # Local tracking URI — stores all run data in ./mlruns folder
-    mlflow.set_tracking_uri(f"file://{os.path.join(ROOT_DIR, 'mlruns')}")
+    mlflow.set_tracking_uri("sqlite:///mlruns.db")
     mlflow.set_experiment(EXPERIMENT_NAME)
     log.info("MLflow experiment: '%s'", EXPERIMENT_NAME)
 

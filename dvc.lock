@@ -1,0 +1,109 @@
+schema: '2.0'
+stages:
+  generate:
+    cmd: python generate_dataset.py
+    deps:
+    - path: generate_dataset.py
+      hash: md5
+      md5: 44062f7fb3fe3a2a331fea8905e535f1
+      size: 4795
+    params:
+      params.yaml:
+        data.n_samples: 10000
+        data.seed: 42
+    outs:
+    - path: data/raw/surge_pricing.csv
+      hash: md5
+      md5: 9005aa441aff2554492959cfe0a26648
+      size: 282183
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+    - path: data/raw/surge_pricing.csv
+      hash: md5
+      md5: 9005aa441aff2554492959cfe0a26648
+      size: 282183
+    - path: src/preprocess.py
+      hash: md5
+      md5: cabd588c086e8c13dbb314b1becb13a5
+      size: 8133
+    params:
+      params.yaml:
+        preprocess.random_state: 42
+        preprocess.test_size: 0.2
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: dc971996855659b2b3e9325321621f4b
+      size: 359202
+    - path: data/processed/train.csv
+      hash: md5
+      md5: df4bcf88acaf0f30abc0009c1afb5ca9
+      size: 1436822
+    - path: models/scaler.joblib
+      hash: md5
+      md5: 9f096810158a3fdcf8c7adf09ffff861
+      size: 1255
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: dc971996855659b2b3e9325321621f4b
+      size: 359202
+    - path: data/processed/train.csv
+      hash: md5
+      md5: df4bcf88acaf0f30abc0009c1afb5ca9
+      size: 1436822
+    - path: src/train.py
+      hash: md5
+      md5: 7e84124038a90f9a55a9b691776e04fb
+      size: 12276
+    params:
+      params.yaml:
+        train.learning_rate: 0.05
+        train.max_depth: 6
+        train.model: xgboost
+        train.n_estimators: 200
+        train.random_state: 42
+        train.subsample: 0.8
+    outs:
+    - path: models/surge_model.joblib
+      hash: md5
+      md5: 9b4ff88731b6d462152d24a8637c6e28
+      size: 589252
+    - path: reports/actual_vs_predicted.png
+      hash: md5
+      md5: fa6945a2613f64ea55b730008659ae34
+      size: 68529
+    - path: reports/feature_importance.png
+      hash: md5
+      md5: 20ad8bd42339f3c7182e89074c17e5cb
+      size: 53456
+    - path: reports/metrics.json
+      hash: md5
+      md5: 408e33d2935e1fab6789229f42f931cd
+      size: 214
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: dc971996855659b2b3e9325321621f4b
+      size: 359202
+    - path: models/surge_model.joblib
+      hash: md5
+      md5: 9b4ff88731b6d462152d24a8637c6e28
+      size: 589252
+    - path: reports/metrics.json
+      hash: md5
+      md5: 408e33d2935e1fab6789229f42f931cd
+      size: 214
+    - path: src/evaluate.py
+      hash: md5
+      md5: 42fe199b924f95ad57cf9d5e35673078
+      size: 5980
+    params:
+      params.yaml:
+        evaluate.max_rmse: 0.25
+        evaluate.min_r2: 0.8

@@ -36,8 +36,7 @@ def promote_best_model() -> None:
     Find the most recent run tagged quality_gate=PASSED and
     transition that model version to 'Staging'.
     """
-    mlflow.set_tracking_uri(f"file://{os.path.join(ROOT_DIR, 'mlruns')}")
-    client = MlflowClient()
+    mlflow.set_tracking_uri("sqlite:///mlruns.db")
 
     # ── 1. Get the experiment ─────────────────────────────────────────────────
     experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
